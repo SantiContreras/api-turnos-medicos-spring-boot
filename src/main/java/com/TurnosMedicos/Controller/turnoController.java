@@ -23,7 +23,7 @@ import com.TurnosMedicos.Dto.TurnoResponseDto;
 import com.TurnosMedicos.Dto.turnoRequestDTO;
 import com.TurnosMedicos.Service.turnoService;
 import com.TurnosMedicos.models.EstadoTurno;
-import com.TurnosMedicos.models.turno;
+import com.TurnosMedicos.models.Turno;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -70,12 +70,12 @@ public class turnoController {
 	}
 
 	@PutMapping("/{id}/cancelar")
-	public turno cancelar(@PathVariable Long id) {
+	public Turno cancelar(@PathVariable Long id) {
 		return turSer.cancelar(id);
 	}
 
 	@PutMapping("/{id}/atender")
-	public turno atender(@PathVariable Long id) {
+	public Turno atender(@PathVariable Long id) {
 		return turSer.marcarTurnoComoAtendido(id);
 	}
 
@@ -88,9 +88,10 @@ public class turnoController {
 			@Parameter(description = "ID del médico") @RequestParam(required = false) Long medicoId,
 			@Parameter(description = "ID del paciente") @RequestParam(required = false) Long pacienteId,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+			@RequestParam(required = false) LocalDate fechaDesde, @RequestParam(required = false) LocalDate fechaHasta,
 			@RequestParam(required = false) EstadoTurno estado, Pageable pageable) {
 
-		return turSer.listarTurnos(medicoId, fecha, estado, pageable);
+		return turSer.listarTurnos(medicoId, fecha, estado, pageable, fecha, fecha);
 
 	}
 

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.TurnosMedicos.Dto.TurnoResponseDto;
@@ -18,10 +19,12 @@ import com.TurnosMedicos.Mapper.MapperTurnos;
 import com.TurnosMedicos.Repository.medicoRepository;
 import com.TurnosMedicos.Repository.pacienteRepository;
 import com.TurnosMedicos.Repository.turnoRepository;
+import com.TurnosMedicos.Specification.TurnoSpecification;
 import com.TurnosMedicos.models.EstadoTurno;
+import com.TurnosMedicos.models.Turno;
 import com.TurnosMedicos.models.medico;
 import com.TurnosMedicos.models.paciente;
-import com.TurnosMedicos.models.turno;
+
 
 @Service
 public class turnoService {
@@ -37,16 +40,16 @@ public class turnoService {
 		this.pacienteRepo = pacienteRepo;
 	}
 
-	public List<turno> listarTurnos() {
+	public List<Turno> listarTurnos() {
 		return turnoRepo.findAll();
 	}
 
-	public turno guardar(turno tu) {
+	public Turno guardar(Turno tu) {
 		return turnoRepo.save(tu);
 	}
 
-	public turno cancelar(Long id) {
-		turno turnoBuscado = turnoRepo.findById(id)
+	public Turno cancelar(Long id) {
+		Turno turnoBuscado = turnoRepo.findById(id)
 				.orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
 		turnoBuscado.setEstado(EstadoTurno.CANCELADO);
 
@@ -55,7 +58,7 @@ public class turnoService {
 	}
 
 	// servicio para crear un turno
-	public turno crearTurno(turno tu) {
+	public Turno crearTurno(Turno tu) {
 		Long medicoId = tu.getMedico().getId();
 
 		boolean existe = turnoRepo.existsByMedicoIdAndFechaAndHora(medicoId, tu.getFecha(), tu.getHora());
@@ -95,7 +98,7 @@ public class turnoService {
 		}
 
 		// 3️⃣ Armar la entidad
-		turno t = new turno();
+		Turno t = new Turno();
 		t.setMedico(medico);
 		t.setPaciente(paciente);
 		t.setEstado(EstadoTurno.PENDIENTE);
@@ -103,7 +106,7 @@ public class turnoService {
 		t.setHora(dto.getHora());
 
 		// 4️⃣ Guardar y mapear a DTO
-		turno turnoGuardado = turnoRepo.save(t);
+		Turno turnoGuardado = turnoRepo.save(t);
 
 		return MapperTurnos.toDTO(turnoGuardado);
 
@@ -111,8 +114,8 @@ public class turnoService {
 
 	// servicio para marcar un turno atendido
 
-	public turno marcarTurnoComoAtendido(Long id) {
-		turno turnoBuscado = turnoRepo.findById(id)
+	public Turno marcarTurnoComoAtendido(Long id) {
+		Turno turnoBuscado = turnoRepo.findById(id)
 				.orElseThrow(() -> new RecursoNoEncontradoException("turno no encontrado"));
 
 		if (turnoBuscado.getEstado() == EstadoTurno.CANCELADO) {
@@ -173,21 +176,21 @@ public class turnoService {
 
 	// metedo para listar los turno por algun parametro (page)
 
-	public Page<TurnoResponseDto> listarTurnos(Long medicoId, LocalDate fecha, EstadoTurno estado, Pageable pageable) {
-		Page<turno> page;
+	public Page<TurnoResponseDto> listarTurnos(Long medicoId, LocalDate fecha, EstadoTurno estado, Pageable pageable,  LocalDate fechaDesde,
+	        LocalDate fechaHasta) {
+	
 
-		if (medicoId != null) {
-			page = turnoRepo.findByMedicoId(medicoId, pageable);
+		Specification<Turno> spec = Specification
+	            .where(TurnoSpecification.tieneMedico(medicoId))
+	            .and(TurnoSpecification.tieneFecha(fecha))
+	            .and(TurnoSpecification.tieneEstado(estado))
+	            .and(TurnoSpecification.fechaEntre(fechaDesde, fechaHasta));
 
-		} else if (fecha != null) {
-			page = turnoRepo.findByFecha(fecha, pageable);
-		} else if (estado != null) {
-			page = turnoRepo.findByEstado(estado, pageable);
-		} else {
-			page = turnoRepo.findAll(pageable);
-		}
+	    Page<Turno> page = turnoRepo.findAll(spec, pageable);
 
-		return page.map(MapperTurnos::toDTO);
+	    return page.map(MapperTurnos::toDTO);
+
+	  
 
 	}
 }

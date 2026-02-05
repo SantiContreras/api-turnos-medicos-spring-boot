@@ -7,16 +7,20 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.TurnosMedicos.models.EstadoTurno;
-import com.TurnosMedicos.models.turno;
+import com.TurnosMedicos.models.Turno;
 
-public interface turnoRepository extends JpaRepository<turno, Long> {
 
-	List<turno> findByFecha(LocalDate fecha);
+public interface turnoRepository extends JpaRepository<Turno, Long> ,JpaSpecificationExecutor<Turno> {
 
-	List<turno> findByMedicoId(Long medicoId);
+	List<Turno> findByFecha(LocalDate fecha);
+
+	List<Turno> findByMedicoId(Long medicoId);
 
 	boolean existsByMedicoIdAndFechaAndHora(
 
@@ -27,11 +31,20 @@ public interface turnoRepository extends JpaRepository<turno, Long> {
 	boolean existsByMedicoIdAndFechaAndHoraAndEstadoNot(Long medicoId, LocalDate fecha, LocalTime hora,
 			EstadoTurno estado);
 
-	Page<turno> findByMedicoId(Long medicoId, Pageable pageable);
+	Page<Turno> findByMedicoId(Long medicoId, Pageable pageable);
 
-	Page<turno> findByFecha(LocalDate fecha, Pageable pageable);
+	Page<Turno> findByFecha(LocalDate fecha, Pageable pageable);
 
-	Page<turno> findByEstado(EstadoTurno estado, Pageable pageable);
+	Page<Turno> findByEstado(EstadoTurno estado, Pageable pageable);
+	
+	//cuando haga la query en turno medico tambien va a traer el medico paciente y especialidad, en vez de hacer varios Select.Aora los agrupa en joins.
+	@Override
+    @EntityGraph(attributePaths = {
+            "medico",
+            "medico.especialidad", 
+            "paciente"
+    })
+	Page<Turno> findAll(Specification<Turno> spec, Pageable pageable);
 	
 	
 
