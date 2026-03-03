@@ -19,7 +19,7 @@ public class Usuario {
 	
 	private String rol; // medico , paciente , admin 
 	
-	private Usuario() {};
+	public Usuario() {};
 
 	public Long getId() {
 		return id;
