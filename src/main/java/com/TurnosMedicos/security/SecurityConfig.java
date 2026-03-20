@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -24,6 +25,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
 	@SuppressWarnings("removal")
@@ -33,6 +35,7 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**").permitAll()
 						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+						.requestMatchers("/admin/**").hasRole("ADMIN_GLOBAL")
 						.requestMatchers(HttpMethod.GET, "/api/turnosMedicos/**").hasAnyRole("USER", "ADMIN")
 						.requestMatchers("/api/turnosMedicos/**").hasRole("ADMIN").anyRequest().authenticated())
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).httpBasic(withDefaults());
@@ -51,11 +54,12 @@ public class SecurityConfig {
 		return authConfig.getAuthenticationManager();
 	}
 	
+	
+	
 	@Bean
-	CommandLineRunner runner(PasswordEncoder encoder) {
+	CommandLineRunner generarClave(PasswordEncoder encoder) {
 	    return args -> {
-	        System.out.println(encoder.matches("1234",
-	                "$2a$10$.CyuMRL7/FFK3NDZHwaMy.iYStcB2m6X4x9.qOzfVB5on7bWTB8KO"));
+	        System.out.println("CLAVE ENCRIPTADA: " + encoder.encode("super123"));
 	    };
 	}
 	

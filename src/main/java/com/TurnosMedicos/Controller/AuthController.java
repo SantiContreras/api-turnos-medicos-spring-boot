@@ -22,6 +22,7 @@ public class AuthController {
 	private final JwtService jwtService;
 	private final UsuarioRepository usuarioRepository;
 	private final PasswordEncoder passwordEncoder;
+	
 
 	public AuthController(AuthenticationManager authenticatinManager, JwtService jwtService,
 			UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
@@ -41,9 +42,13 @@ public class AuthController {
 		Authentication auth = authenticationManager
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
+		Usuario usuario = usuarioRepository
+		        .findByUsername(request.getUsername())
+		        .orElseThrow();
+		
 		UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-		String token = jwtService.generatedToken(userDetails);
+		String token = jwtService.generatedToken(userDetails, usuario.getOrganizacion().getId());
 
 		String role = userDetails.getAuthorities().iterator().next().getAuthority();
 

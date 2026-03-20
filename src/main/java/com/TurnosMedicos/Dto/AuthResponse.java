@@ -7,10 +7,9 @@ private	String username;
 private	String token;
 private	String role;
 private	String type="Bearer";
-public AuthResponse(String username, String token, String role) {
-	
-	this.username = username;
+public AuthResponse( String token,String username, String role) {
 	this.token = token;
+	this.username = username;
 	this.role = role;
 	
 }

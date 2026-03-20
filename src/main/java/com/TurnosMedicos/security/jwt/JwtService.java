@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -16,6 +17,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String SECRET_KEY = "12345678901234567890123456789012";
+    private static final long EXPIRATION = 1000 * 60 * 60; // 1 hora
+
 
     private Key getSignKey() {
         byte[] keyBytes = SECRET_KEY.getBytes();
@@ -25,13 +28,14 @@ public class JwtService {
     // ===============================
     // Generar Token
     // ===============================
-    public String generatedToken(UserDetails userDetail) {
+    public String generatedToken(UserDetails userDetail, Long OrganizacionId) {
         return Jwts.builder()
                 .setSubject(userDetail.getUsername())
                 .claim("role", userDetail.getAuthorities().iterator().next().getAuthority())
+                .claim("org", OrganizacionId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(getSignKey())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -77,5 +81,15 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
         return claimsResolver.apply(claims);
+    }
+    
+    //=================================
+    // Extraer una organizacion
+    //=================================
+    
+  
+    
+    public Long extractOrganizacion(String token) {
+        return extractClaim(token, claims -> claims.get("org", Long.class));
     }
 }

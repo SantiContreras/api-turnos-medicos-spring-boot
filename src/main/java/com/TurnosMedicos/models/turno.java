@@ -56,6 +56,10 @@ public class Turno implements Serializable {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "medico_id", nullable = false)
 	private medico medico;
+	
+	@ManyToOne
+	@JoinColumn(name = "organizacion_id", nullable = false)
+	private Organizacion organizacion;
 
 	public Turno() {
 		this.estado = EstadoTurno.RESERVADO;
@@ -108,6 +112,16 @@ public class Turno implements Serializable {
 	public void setMedico(medico medico) {
 		this.medico = medico;
 	}
+
+	public Organizacion getOrganizacion() {
+		return organizacion;
+	}
+
+	public void setOrganizacion(Organizacion organizacion) {
+		this.organizacion = organizacion;
+	}
+	
+	
 
 	
 }
