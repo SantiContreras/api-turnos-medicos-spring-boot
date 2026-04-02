@@ -24,6 +24,8 @@ public class Usuario {
 	@ManyToOne
 	@JoinColumn(name = "organizacion_id", nullable = false)
 	private Organizacion organizacion;
+	
+	private boolean activo = true;
 
 	public Usuario() {
 	};
@@ -67,6 +69,16 @@ public class Usuario {
 	public void setOrganizacion(Organizacion organizacion) {
 		this.organizacion = organizacion;
 	}
+
+	public boolean getActivo() {
+		return activo;
+	}
+
+	public void setActivo(boolean activo) {
+		this.activo = activo;
+	}
+	
+	
 	
 	
 

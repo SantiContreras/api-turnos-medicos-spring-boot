@@ -9,12 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrimaryKeyJoinColumns;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name="medicos")
-public class medico implements Serializable{
+public class Medico implements Serializable{
 
 	/**
 	 * 
@@ -41,8 +42,20 @@ public class medico implements Serializable{
 	@ManyToOne
 	@JoinColumn(name = "especialidad_id",nullable = false)
 	private especialidad especialidad;
+	
+	@ManyToOne
+	@JoinColumn(name="organizacion_id",nullable = false)
+	private Organizacion organizacion;
 
-	 public medico() {
+	 public Organizacion getOrganizacion() {
+		return organizacion;
+	}
+
+	public void setOrganizacion(Organizacion organizacion) {
+		this.organizacion = organizacion;
+	}
+
+	public Medico() {
 	    }
 
 	public Long getId() {

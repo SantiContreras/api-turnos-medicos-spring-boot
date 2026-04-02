@@ -45,5 +45,21 @@ public class TurnoSpecification {
 			return cb.lessThanOrEqualTo(root.get("fecha"), fechaHasta);
 		};
 	}
+	
+	public static Specification<Turno> perteneceAOrganizacion(Long orgId) {
+	    return (root, query, cb) -> {
+	        if (orgId == null) return null;
+	        return cb.equal(root.get("organizacion").get("id"), orgId);
+	    };
+	}
+	
+	public static Specification<Turno> tienePaciente(Long pacienteId) {
+	    return (root, query, criteriaBuilder) -> {
+	        if (pacienteId == null) {
+	            return criteriaBuilder.conjunction();
+	        }
+	        return criteriaBuilder.equal(root.get("paciente").get("id"), pacienteId);
+	    };
+	}
 
 }

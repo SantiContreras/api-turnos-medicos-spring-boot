@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.apache.catalina.mapper.Mapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,10 +22,11 @@ import com.TurnosMedicos.Repository.pacienteRepository;
 import com.TurnosMedicos.Repository.turnoRepository;
 import com.TurnosMedicos.Specification.TurnoSpecification;
 import com.TurnosMedicos.models.EstadoTurno;
+import com.TurnosMedicos.models.Medico;
+import com.TurnosMedicos.models.Organizacion;
 import com.TurnosMedicos.models.Turno;
-import com.TurnosMedicos.models.medico;
-import com.TurnosMedicos.models.paciente;
 
+import com.TurnosMedicos.models.paciente;
 
 @Service
 public class turnoService {
@@ -47,63 +49,113 @@ public class turnoService {
 	public Turno guardar(Turno tu) {
 		return turnoRepo.save(tu);
 	}
+	
+	//==================================================================
+	//===================CANCELAR TURNO ================================
+	//==================================================================
 
-	public Turno cancelar(Long id) {
-		Turno turnoBuscado = turnoRepo.findById(id)
-				.orElseThrow(() -> new RecursoNoEncontradoException("Turno no encontrado"));
-		turnoBuscado.setEstado(EstadoTurno.CANCELADO);
+	public Turno cancelar(Long id , Long idOrg) {
+		
+		//buscamos el turno
+		  Turno turno = turnoRepo.findById(id)
+		            .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+		  //verifgicamos que pertenesca a esa organizaacion
+		    if (!turno.getOrganizacion().getId().equals(idOrg)) {
+		        throw new RuntimeException("No pertenece a tu organización");
+		    }
 
-		return turnoRepo.save(turnoBuscado);
+		    turno.setEstado(EstadoTurno.CANCELADO);
+
+		    return turnoRepo.save(turno);
 
 	}
 
 	// servicio para crear un turno
-	public Turno crearTurno(Turno tu) {
-		Long medicoId = tu.getMedico().getId();
+	public TurnoResponseDto crearTurno(turnoRequestDTO turnoRequest, Long idOrg) {
 
-		boolean existe = turnoRepo.existsByMedicoIdAndFechaAndHora(medicoId, tu.getFecha(), tu.getHora());
+		paciente paciente = pacienteRepo.findById(turnoRequest.getPacienteId())
+				.orElseThrow(() -> new RuntimeException("paciente no encontrado"));
+
+		if (!paciente.getOrganizacion().getId().equals(idOrg)) {
+			throw new RuntimeException("Paciente no pertenece a tu organización");
+		}
+		Medico medico = medicoRepo.findById(turnoRequest.getMedicoId())
+				.orElseThrow(() -> new RuntimeException("Medico no encontrado"));
+
+		if (!medico.getOrganizacion().getId().equals(idOrg)) {
+			throw new RuntimeException("El medico no pertenece a tu organización");
+		}
+
+		Turno turno = new Turno();
+		turno.setFecha(turnoRequest.getFecha());
+		turno.setHora(turnoRequest.getHora());
+		turno.setPaciente(paciente);
+		turno.setMedico(medico);
+
+		Organizacion org = new Organizacion();
+		org.setId(idOrg);
+		turno.setOrganizacion(org);
+
+		Long medicoId = turnoRequest.getMedicoId();
+
+		boolean existe = turnoRepo.existsByMedicoIdAndFechaAndHora(medicoId, turnoRequest.getFecha(),
+				turnoRequest.getHora());
 
 		if (existe) {
 			throw new TurnoDuplicadoException("El medico ya tiene un turno reservado en esa hora y fecha");
 		}
 
 		// vuelve al estado inicial
-		tu.setEstado(EstadoTurno.PENDIENTE);
+		turno.setEstado(EstadoTurno.PENDIENTE);
 
-		return turnoRepo.save(tu);
+		return MapperTurnos.toDTO(turnoRepo.save(turno));
 	}
 
 	// servicio para crear un turno pero usando Dtos y mappers
 
-	public TurnoResponseDto CrearElTurno(turnoRequestDTO dto) {
+	public TurnoResponseDto CrearElTurno(turnoRequestDTO dtoRequest, Long idOrg) {
 
-		// buscamos al medico
-		medico medico = medicoRepo.findById(dto.getMedicoId())
-				.orElseThrow(() -> new RecursoNoEncontradoException("Médico no encontrado"));
-		// bucamos al paciente
-		paciente paciente = pacienteRepo.findById(dto.getPacienteId())
-				.orElseThrow(() -> new RecursoNoEncontradoException("Paciente no encontrado"));
+		// buscamos al medico y el paciente y verificamos tambien que exista a esa organizacion
+		paciente paciente = pacienteRepo.findById(dtoRequest.getPacienteId())
+				.orElseThrow(() -> new RuntimeException("paciente no encontrado"));
+
+		if (!paciente.getOrganizacion().getId().equals(idOrg)) {
+			throw new RuntimeException("Paciente no pertenece a tu organización");
+		}
+		Medico medico = medicoRepo.findById(dtoRequest.getMedicoId())
+				.orElseThrow(() -> new RuntimeException("Medico no encontrado"));
+
+		if (!medico.getOrganizacion().getId().equals(idOrg)) {
+			throw new RuntimeException("El medico no pertenece a tu organización");
+		}
 
 		// validamos Fecha Y hora del turno y horario disponible del medico
 
-		ValidarFechaYHora(dto);
-		ValidarHorarioDisponible(dto.getHora());
-		ValidarTurnoActivo(medico.getId(), dto.getFecha(), dto.getHora());
+		ValidarFechaYHora(dtoRequest);
+		ValidarHorarioDisponible(dtoRequest.getHora());
+		ValidarTurnoActivo(medico.getId(), dtoRequest.getFecha(), dtoRequest.getHora());
 
 		// 2️⃣ Validación de duplicados (MISMA lógica)
-		boolean existe = turnoRepo.existsByMedicoIdAndFechaAndHora(medico.getId(), dto.getFecha(), dto.getHora());
+		boolean existe = turnoRepo.existsByMedicoIdAndFechaAndHora(medico.getId(), dtoRequest.getFecha(),
+				dtoRequest.getHora());
 
 		if (existe) {
 			throw new TurnoDuplicadoException("El médico ya tiene un turno en esa fecha y hora");
 		}
+		
+
+		Organizacion org = new Organizacion();
+		org.setId(idOrg);
+		
 
 		// 3️⃣ Armar la entidad
 		Turno t = new Turno();
 		t.setMedico(medico);
 		t.setPaciente(paciente);
 		t.setEstado(EstadoTurno.PENDIENTE);
-		t.setFecha(dto.getFecha());
-		t.setHora(dto.getHora());
+		t.setFecha(dtoRequest.getFecha());
+		t.setHora(dtoRequest.getHora());
+		t.setOrganizacion(org);
 
 		// 4️⃣ Guardar y mapear a DTO
 		Turno turnoGuardado = turnoRepo.save(t);
@@ -176,12 +228,20 @@ public class turnoService {
 
 	// metedo para listar los turno por algun parametro (page)
 
-	public Page<TurnoResponseDto> listarTurnos(Long medicoId, LocalDate fecha, EstadoTurno estado, Pageable pageable,  LocalDate fechaDesde,
-	        LocalDate fechaHasta) {
-	
+	public Page<TurnoResponseDto> listarTurnos(
+	        Long medicoId,
+	        Long pacienteId,
+	        LocalDate fecha,
+	        EstadoTurno estado,
+	        Pageable pageable,
+	        LocalDate fechaDesde,
+	        LocalDate fechaHasta,
+	        Long idOrg) {
 
-		Specification<Turno> spec = Specification
-	            .where(TurnoSpecification.tieneMedico(medicoId))
+	    Specification<Turno> spec = Specification
+	            .where(TurnoSpecification.perteneceAOrganizacion(idOrg)) // 🔥 CLAVE MULTI-TENANT
+	            .and(TurnoSpecification.tieneMedico(medicoId))
+	            .and(TurnoSpecification.tienePaciente(pacienteId))
 	            .and(TurnoSpecification.tieneFecha(fecha))
 	            .and(TurnoSpecification.tieneEstado(estado))
 	            .and(TurnoSpecification.fechaEntre(fechaDesde, fechaHasta));
@@ -189,8 +249,5 @@ public class turnoService {
 	    Page<Turno> page = turnoRepo.findAll(spec, pageable);
 
 	    return page.map(MapperTurnos::toDTO);
-
-	  
-
 	}
 }

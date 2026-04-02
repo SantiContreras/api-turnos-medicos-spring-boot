@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.TurnosMedicos.Service.medicoService;
-import com.TurnosMedicos.models.medico;
+import com.TurnosMedicos.models.Medico;
+
 
 import jakarta.validation.Valid;
 
@@ -29,14 +30,14 @@ public class medicoController {
 
 	// get
 	@GetMapping
-	public List<medico> listar() {
+	public List<Medico> listar() {
 
 		return medSer.listar();
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public medico crear(@Valid @RequestBody medico medico) {
+	public Medico crear(@Valid @RequestBody Medico medico) {
 		return medSer.guardar(medico);
 	}
 	

@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.TurnosMedicos.Repository.medicoRepository;
-import com.TurnosMedicos.models.medico;
+import com.TurnosMedicos.models.Medico;
+
 
 @Service
 public class medicoService {
@@ -19,13 +20,13 @@ public class medicoService {
 	
 	//listar 
 	
-	public List<medico> listar(){
+	public List<Medico> listar(){
 		return medRep.findAll();	
 		}
 	
 	//guardar
 	
-	public medico guardar(medico me) {
+	public Medico guardar(Medico me) {
 		return medRep.save(me);
 	}
 	

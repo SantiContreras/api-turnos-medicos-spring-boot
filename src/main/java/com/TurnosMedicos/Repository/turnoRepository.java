@@ -46,6 +46,8 @@ public interface turnoRepository extends JpaRepository<Turno, Long> ,JpaSpecific
     })
 	Page<Turno> findAll(Specification<Turno> spec, Pageable pageable);
 	
+	Page<Turno> findByOrganizacionId(Long orgId, Pageable pageable);
+	
 	
 
 }

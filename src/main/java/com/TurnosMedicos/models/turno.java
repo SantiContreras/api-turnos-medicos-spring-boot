@@ -55,7 +55,7 @@ public class Turno implements Serializable {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "medico_id", nullable = false)
-	private medico medico;
+	private Medico medico;
 	
 	@ManyToOne
 	@JoinColumn(name = "organizacion_id", nullable = false)
@@ -105,11 +105,11 @@ public class Turno implements Serializable {
 		this.paciente = paciente;
 	}
 
-	public medico getMedico() {
+	public Medico getMedico() {
 		return medico;
 	}
 
-	public void setMedico(medico medico) {
+	public void setMedico(Medico medico) {
 		this.medico = medico;
 	}
 

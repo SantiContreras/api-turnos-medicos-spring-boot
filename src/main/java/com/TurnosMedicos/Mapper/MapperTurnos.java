@@ -22,6 +22,7 @@ public class MapperTurnos {
 			MedicoResponseDto medicoDto = new MedicoResponseDto();
 			medicoDto.setNombre(t.getMedico().getNombre());
 			medicoDto.setApellido(t.getMedico().getApellido());
+			medicoDto.setId(t.getMedico().getId());
 
 			if (t.getMedico().getEspecialidad() != null) {
 				medicoDto.setEspecialidad(t.getMedico().getEspecialidad().getNombre());
@@ -36,7 +37,8 @@ public class MapperTurnos {
 			pacienteDto.setNombre(t.getPaciente().getNombre());
 			pacienteDto.setApellido(t.getPaciente().getApellido());
 			pacienteDto.setDni(t.getPaciente().getDni());
-
+            pacienteDto.setId(t.getPaciente().getId());
+            
 			turnoDto.setPaciente(pacienteDto);
 		}
 
