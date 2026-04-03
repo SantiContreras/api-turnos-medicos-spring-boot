@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.TurnosMedicos.Dto.AgendaDto;
 import com.TurnosMedicos.Dto.TurnoResponseDto;
 import com.TurnosMedicos.Dto.turnoRequestDTO;
 import com.TurnosMedicos.Service.turnoService;
@@ -130,5 +131,19 @@ public class turnoController {
 	            orgId
 	    );
 	}
+	
+	//================== END POINT AGENDA ===================================================
 
+
+	@GetMapping("/agenda")
+	public List<AgendaDto> agenda (@RequestParam Long medicoId ,
+			@RequestParam @DateTimeFormat(iso= DateTimeFormat.ISO.DATE) LocalDate fecha ,
+			HttpServletRequest request){
+		
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
+		
+		return turSer.obtenerAgenda(medicoId, fecha, orgId);
+		
+	}
 }

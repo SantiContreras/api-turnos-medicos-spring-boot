@@ -2,6 +2,7 @@ package com.TurnosMedicos.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.catalina.mapper.Mapper;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.TurnosMedicos.Dto.AgendaDto;
 import com.TurnosMedicos.Dto.TurnoResponseDto;
 import com.TurnosMedicos.Dto.turnoRequestDTO;
 import com.TurnosMedicos.Exception.HorarioNoDisponibleException;
@@ -69,8 +71,9 @@ public class turnoService {
 		    return turnoRepo.save(turno);
 
 	}
-
-	// servicio para crear un turno
+	//==================================================================
+	//===================CREAR TURNO 1 ================================
+	//==================================================================
 	public TurnoResponseDto crearTurno(turnoRequestDTO turnoRequest, Long idOrg) {
 
 		paciente paciente = pacienteRepo.findById(turnoRequest.getPacienteId())
@@ -111,8 +114,9 @@ public class turnoService {
 		return MapperTurnos.toDTO(turnoRepo.save(turno));
 	}
 
-	// servicio para crear un turno pero usando Dtos y mappers
-
+	//==================================================================
+	//===================CANCELAR TURNO 2 ================================
+	//==================================================================
 	public TurnoResponseDto CrearElTurno(turnoRequestDTO dtoRequest, Long idOrg) {
 
 		// buscamos al medico y el paciente y verificamos tambien que exista a esa organizacion
@@ -164,7 +168,9 @@ public class turnoService {
 
 	}
 
-	// servicio para marcar un turno atendido
+	//==================================================================
+	//===================MARCAR TURNO COMO ATENDIDO ================================
+	//==================================================================
 
 	public Turno marcarTurnoComoAtendido(Long id) {
 		Turno turnoBuscado = turnoRepo.findById(id)
@@ -179,7 +185,9 @@ public class turnoService {
 
 	}
 
-	// metodo para validar que no sean fechas pasadas
+	//==================================================================
+	//===========VALIDAR QUE NO SON FECHAS PASADAS ====================
+	//==================================================================
 
 	public void ValidarFechaYHora(turnoRequestDTO dto) {
 
@@ -196,7 +204,9 @@ public class turnoService {
 		}
 	}
 
-	// metodo para validar el horario disponible
+	//==================================================================
+	//===================VALIDAR HORARIO DISPONIBLE ====================
+	//==================================================================
 
 	public void ValidarHorarioDisponible(LocalTime hora) {
 		LocalTime inicio = LocalTime.of(8, 0);
@@ -213,7 +223,9 @@ public class turnoService {
 
 	}
 
-	// metodo para validar el turno activo
+	//==================================================================
+	//===================VALIDADAR TURNO ACTIVO=========================
+	//==================================================================
 
 	public void ValidarTurnoActivo(Long medicoId, LocalDate fecha, LocalTime hora) {
 
@@ -226,7 +238,9 @@ public class turnoService {
 		}
 	}
 
-	// metedo para listar los turno por algun parametro (page)
+	//==================================================================
+	//===================LISTAR TURNO ================================
+	//==================================================================
 
 	public Page<TurnoResponseDto> listarTurnos(
 	        Long medicoId,
@@ -249,5 +263,47 @@ public class turnoService {
 	    Page<Turno> page = turnoRepo.findAll(spec, pageable);
 
 	    return page.map(MapperTurnos::toDTO);
+	}
+	
+
+	//==================================================================
+	//===================AGENDA DEL MEDICO =============================
+	//==================================================================
+	
+	public List<AgendaDto> obtenerAgenda(Long medicoId , LocalDate fecha , Long orgId){
+		
+		// 1. traer el turno existente 
+		List<Turno> turnos = turnoRepo.findByMedicoIdAndFecha(medicoId, fecha);
+		
+		//2. Filtrar por organizacion .
+		
+		turnos = turnos.stream()
+				.filter(t -> t.getOrganizacion().getId().equals(orgId))
+				.toList();
+		
+		// 3. Crear lista de horarios (ej : 8:00 am hasta 18:00 am cada 30 minutos)
+		
+		List<AgendaDto> agenda = new ArrayList<>(); 
+		
+		LocalTime inicio = LocalTime.of(8, 0);
+		LocalTime fin = LocalTime.of(18, 0);
+		
+		while (!inicio.isAfter(fin)) {
+			LocalTime horaActual = inicio;
+			
+			boolean ocupado = turnos.stream()
+					.anyMatch(t-> t.getHora().equals(horaActual)
+					&& t.getEstado() != EstadoTurno.CANCELADO);
+			
+			agenda.add(new AgendaDto(
+					horaActual.toString(),
+					ocupado ? "ocupado" : "libre"
+					));
+			
+			inicio = inicio.plusMinutes(30);
+		}
+		
+		return agenda;
+		
 	}
 }
