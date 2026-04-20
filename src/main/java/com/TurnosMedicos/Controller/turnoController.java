@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.TurnosMedicos.Dto.AgendaDto;
+import com.TurnosMedicos.Dto.AgendaDtoResponse;
 import com.TurnosMedicos.Dto.TurnoResponseDto;
 import com.TurnosMedicos.Dto.turnoRequestDTO;
 import com.TurnosMedicos.Service.turnoService;
@@ -44,7 +45,7 @@ public class turnoController {
 	private final turnoService turSer;
 	private final JwtService jwtService;
 
-	public turnoController(turnoService turSer , JwtService jwtService) {
+	public turnoController(turnoService turSer, JwtService jwtService) {
 		this.turSer = turSer;
 		this.jwtService = jwtService;
 	}
@@ -62,88 +63,104 @@ public class turnoController {
 	 * return turSer.guardar(tu); }
 	 */
 
-	// ================== END POINT CREAR TURNO ===================================================
+	// ================== END POINT CREAR TURNO
+	// ===================================================
 	@Operation(summary = "Crear turno", description = "Crea un turno validando que no exista otro en el mismo horario")
 	@ApiResponses({ @ApiResponse(responseCode = "201", description = "Turno creado"),
 			@ApiResponse(responseCode = "409", description = "Turno duplicado"),
 			@ApiResponse(responseCode = "404", description = "Médico o paciente inexistente") })
-	@PostMapping
+	@PostMapping("disponibilidad")
 	@ResponseStatus(HttpStatus.CREATED)
-	public ResponseEntity<TurnoResponseDto> crear(@Valid @RequestBody turnoRequestDTO tu , HttpServletRequest request) {
-		
+	public ResponseEntity<TurnoResponseDto> crear(@Valid @RequestBody turnoRequestDTO tu, HttpServletRequest request) {
+
 		String token = request.getHeader("Authorization").substring(7);
 		Long idOrg = jwtService.extractOrganizacion(token);
-		
-		 return ResponseEntity.status(HttpStatus.CREATED)
-		            .body(turSer.CrearElTurno(tu, idOrg));
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(turSer.CrearElTurno(tu, idOrg));
 	}
 
-	//=================== END POINT CANCELAR TURNO =================================
+	// =================== END POINT CANCELAR TURNO
+	// =================================
 	@PutMapping("/{id}/cancelar")
-	public Turno cancelar(@PathVariable Long id , HttpServletRequest request) {
+	public Turno cancelar(@PathVariable Long id, HttpServletRequest request) {
 
-	    String token = request.getHeader("Authorization").substring(7);
-	    Long orgId = jwtService.extractOrganizacion(token);
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
 
-	    return turSer.cancelar(id, orgId);
+		return turSer.cancelar(id, orgId);
 	}
-	
-	//=================== END POINT  ATENDER TURNO ==========================================
+
+	// =================== END POINT ATENDER TURNO
+	// ==========================================
 	@PutMapping("/{id}/atender")
 	public Turno atender(@PathVariable Long id, HttpServletRequest request) {
-		
 
-	    String token = request.getHeader("Authorization").substring(7);
-	    Long orgId = jwtService.extractOrganizacion(token);
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
 
-	   
 		return turSer.marcarTurnoComoAtendido(id);
 	}
 
-	
-	//================== END POINT LISTAR TURNOS ===================================================
+	// ================== END POINT LISTAR TURNOS
+	// ===================================================
 	@Operation(summary = "Listar turnos", description = "Permite listar turnos con filtros opcionales y paginación")
 	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Listado de turnos"),
 			@ApiResponse(responseCode = "400", description = "Parámetros inválidos") })
 	@GetMapping
 	public Page<TurnoResponseDto> listarTurnos(
 
-	        @RequestParam(required = false) Long medicoId,
-	        @RequestParam(required = false) Long pacienteId,
-	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
-	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
-	        @RequestParam(required = false) EstadoTurno estado,
-	        Pageable pageable,
-	        HttpServletRequest request) {
+			@RequestParam(required = false) Long medicoId, @RequestParam(required = false) Long pacienteId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+			@RequestParam(required = false) EstadoTurno estado, Pageable pageable, HttpServletRequest request) {
+
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
+
+		return turSer.listarTurnos(medicoId, pacienteId, fecha, estado, pageable, fechaDesde, fechaHasta, orgId);
+	}
+
+	// ================== END POINT AGENDA
+	// ===================================================
+
+	/*@GetMapping("/agenda")
+	public List<AgendaDto> agenda(@RequestParam Long medicoId,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha, HttpServletRequest request) {
+
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
+
+		return turSer.obtenerAgenda(medicoId, fecha, orgId);
+
+	}*/
+
+	// ================ END POINT OBTENER TURNOS DISPONIBLES
+	// =================================
+
+	@GetMapping("/disponibles")
+	public List<String> obtenerDisponibles(@RequestParam Long medicoId,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha, HttpServletRequest request) {
+
+		String token = request.getHeader("Authorization").substring(7);
+		Long orgId = jwtService.extractOrganizacion(token);
+
+		return turSer.ObtenerHorariosDisponibles(medicoId, fecha, orgId);
+
+	}
+	
+	// END POINT PARA ORTENER AGENDA DE TURNOS DISPONIBLES MAS COMPLETO
+	
+	@GetMapping("/agenda")
+	public List<AgendaDtoResponse> obtenerAgenda(
+	        @RequestParam Long medicoId,
+	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+	        HttpServletRequest request
+	) {
 
 	    String token = request.getHeader("Authorization").substring(7);
 	    Long orgId = jwtService.extractOrganizacion(token);
 
-	    return turSer.listarTurnos(
-	            medicoId,
-	            pacienteId,
-	            fecha,
-	            estado,
-	            pageable,
-	            fechaDesde,
-	            fechaHasta,
-	            orgId
-	    );
-	}
-	
-	//================== END POINT AGENDA ===================================================
-
-
-	@GetMapping("/agenda")
-	public List<AgendaDto> agenda (@RequestParam Long medicoId ,
-			@RequestParam @DateTimeFormat(iso= DateTimeFormat.ISO.DATE) LocalDate fecha ,
-			HttpServletRequest request){
-		
-		String token = request.getHeader("Authorization").substring(7);
-		Long orgId = jwtService.extractOrganizacion(token);
-		
-		return turSer.obtenerAgenda(medicoId, fecha, orgId);
-		
+	    return turSer.obtenerAgendaVisual(medicoId, fecha, orgId);
 	}
 }

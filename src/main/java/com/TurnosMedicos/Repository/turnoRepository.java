@@ -49,5 +49,7 @@ public interface turnoRepository extends JpaRepository<Turno, Long> ,JpaSpecific
 	Page<Turno> findByOrganizacionId(Long orgId, Pageable pageable);
 	
 	List<Turno> findByMedicoIdAndFecha(Long medicoId , LocalDate fecha);
+	
+	List<Turno> findByMedicoIdAndFechaAndOrganizacionId( Long medicoId, LocalDate fecha,Long orgId);
 
 }
