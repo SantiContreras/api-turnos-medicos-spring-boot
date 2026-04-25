@@ -5,9 +5,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.management.RuntimeErrorException;
 
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,7 @@ import com.TurnosMedicos.Exception.HorarioNoDisponibleException;
 import com.TurnosMedicos.Repository.DisponibilidadRepository;
 import com.TurnosMedicos.Repository.medicoRepository;
 import com.TurnosMedicos.Repository.turnoRepository;
+import com.TurnosMedicos.models.DiaSemana;
 import com.TurnosMedicos.models.Disponibilidad;
 import com.TurnosMedicos.models.Medico;
 import com.TurnosMedicos.models.Turno;
@@ -187,6 +191,17 @@ public class DisponibilidadService {
         if (solapado) {
             throw new RuntimeException("Ya existe una disponibilidad en ese rango horario");
         }
+        
+        validarSolapamiento(
+        	    medico.getId(),
+        	    dto.getDiaSemana(),
+        	    dto.getHoraInicio(),
+        	    dto.getHoraFin()
+        	);
+        
+        if (dto.getHoraInicio().isAfter(dto.getHoraFin())) {
+            throw new RuntimeException("La hora de inicio no puede ser mayor a la final");
+        }
 
         Disponibilidad d = new Disponibilidad();
         d.setOrganizacion(null);
@@ -225,6 +240,25 @@ public class DisponibilidadService {
         }
 
         dispoRepo.delete(d);
+    }
+    
+    //============================================================
+    //============ VALIDAD SOLAPAMIENTO DE DISPONIBILIDAD ========
+    // ===========================================================
+    
+    public void validarSolapamiento(Long medicoId , DiaSemana dia , LocalTime inicio , LocalTime fin) {
+    	
+    	List <Disponibilidad> existente = dispoRepo.findByMedicoIdAndDiaSemana(medicoId, dia);
+    	
+    	for (Disponibilidad d : existente ) {
+		 boolean seSolapa = inicio.isBefore(d.getHoraFinal()) && fin.isAfter(d.getHoraInicio());
+		 
+		 if (seSolapa) {
+			throw new RuntimeException("La disponibilidad se solapa con otra existente") ; 
+		}
+			
+		}
+    	
     }
     
 }

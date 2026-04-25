@@ -4,9 +4,12 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.TurnosMedicos.models.DiaSemana;
 import com.TurnosMedicos.models.Disponibilidad;
 
 public interface DisponibilidadRepository extends JpaRepository<Disponibilidad, Long>{
 
 	 List<Disponibilidad> findByMedicoIdAndOrganizacionId(Long medicoId, Long orgId);
+	 
+	 List<Disponibilidad> findByMedicoIdAndDiaSemana(Long medicoId , DiaSemana dia);
 }
