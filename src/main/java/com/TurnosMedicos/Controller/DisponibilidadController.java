@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,43 +24,39 @@ import jakarta.servlet.http.HttpServletRequest;
 public class DisponibilidadController {
 
 	private final DisponibilidadService service;
-    private final JwtService jwtService;
+	private final JwtService jwtService;
 
-    public DisponibilidadController(DisponibilidadService service, JwtService jwtService) {
-        this.service = service;
-        this.jwtService = jwtService;
-    }
+	public DisponibilidadController(DisponibilidadService service, JwtService jwtService) {
+		this.service = service;
+		this.jwtService = jwtService;
+	}
 
-    @PostMapping
-    public DisponibilidadResponseDto crear(
-            @RequestBody DisponibilidadRequestDto dto,
-            HttpServletRequest request) {
+	// ==========================================================
+	// ==================== CREAR DISPONIBILIDAD ================
+	// ==========================================================
+	@PostMapping
+	public DisponibilidadResponseDto crear(@RequestBody DisponibilidadRequestDto dto,
+			@RequestAttribute("orgId") Long orgId) {
 
-        String token = request.getHeader("Authorization").substring(7);
-        Long orgId = jwtService.extractOrganizacion(token);
+		return service.crearDisponibilidad(dto, orgId);
+	}
 
-        return service.crearDisponibilidad(dto, orgId);
-    }
+	// ==========================================================
+	// ==================== LISTAR ================
+	// ==========================================================
+	@GetMapping
+	public List<DisponibilidadResponseDto> listar(@RequestParam Long medicoId, @RequestAttribute("orgId") Long orgId) {
 
-    @GetMapping
-    public List<DisponibilidadResponseDto> listar(
-            @RequestParam Long medicoId,
-            HttpServletRequest request) {
+		return service.listarDisponibilidad(medicoId, orgId);
+	}
 
-        String token = request.getHeader("Authorization").substring(7);
-        Long orgId = jwtService.extractOrganizacion(token);
+	// ==========================================================
+	// ==================== ELIMINAR DISPONIBILIDAD ================
+	// ==========================================================
 
-        return service.listarDisponibilidad(medicoId, orgId);
-    }
+	@DeleteMapping("/{id}")
+	public void eliminar(@PathVariable Long id, @RequestAttribute("orgId") Long orgId) {
 
-    @DeleteMapping("/{id}")
-    public void eliminar(
-            @PathVariable Long id,
-            HttpServletRequest request) {
-
-        String token = request.getHeader("Authorization").substring(7);
-        Long orgId = jwtService.extractOrganizacion(token);
-
-        service.eliminarDisponibilidad(id, orgId);
-    }
+		service.eliminarDisponibilidad(id, orgId);
+	}
 }

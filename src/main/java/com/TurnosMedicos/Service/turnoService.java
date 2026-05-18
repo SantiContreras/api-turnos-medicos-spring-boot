@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.TurnosMedicos.Dto.AgendaDto;
 import com.TurnosMedicos.Dto.AgendaDtoResponse;
@@ -66,19 +67,28 @@ public class turnoService {
 	// ===================CANCELAR TURNO ================================
 	// ==================================================================
 
-	public Turno cancelar(Long id, Long idOrg) {
+	@Transactional
+	public void cancelar(Long id, Long idOrg) {
 
-		// buscamos el turno
-		Turno turno = turnoRepo.findById(id).orElseThrow(() -> new RuntimeException("Turno no encontrado"));
-		// verifgicamos que pertenesca a esa organizaacion
-		if (!turno.getOrganizacion().getId().equals(idOrg)) {
-			throw new RuntimeException("No pertenece a tu organización");
-		}
+	    // 1️⃣ Buscar turno (solo para validar)
+	    Turno turno = turnoRepo.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
 
-		turno.setEstado(EstadoTurno.CANCELADO);
+	    System.out.println("ID TURNO: " + turno.getId());
+	    System.out.println("ORG DEL TURNO: " + turno.getOrganizacion().getId());
+	    System.out.println("ORG DEL TOKEN: " + idOrg);
 
-		return turnoRepo.save(turno);
+	    // 2️⃣ Validar organización
+	    if (!turno.getOrganizacion().getId().equals(idOrg)) {
+	        throw new RuntimeException("No pertenece a tu organización");
+	    }
 
+	    // 3️⃣ UPDATE directo (🔥 CLAVE)
+	    int filas = turnoRepo.actualizarEstado(id, EstadoTurno.CANCELADO);
+
+	    if (filas == 0) {
+	        throw new RuntimeException("No se pudo cancelar el turno");
+	    }
 	}
 
 	// ==================================================================
@@ -159,6 +169,9 @@ public class turnoService {
 		}
 
 		ValidarTurnoConMedico(medico, dtoRequest.getFecha(), dtoRequest.getHora(), idOrg);
+
+		// 🔥 ESTA ES LA NUEVA CLAVE
+		ValidarTurnoConDisponiblidad(medico, dtoRequest.getFecha(), dtoRequest.getHora(), idOrg);
 
 		Organizacion org = new Organizacion();
 		org.setId(idOrg);
@@ -302,6 +315,10 @@ public class turnoService {
 		return agenda;
 
 	}
+	
+	//===========================================================
+	//==================== VALIDAR TURNO CON EL MEDICO ==========
+	//===========================================================
 
 	public void ValidarTurnoConMedico(Medico medico, LocalDate fecha, LocalTime hora, Long orgId) {
 
@@ -311,7 +328,15 @@ public class turnoService {
 
 		boolean disponible = disponibilidades.stream().anyMatch(d -> d.getDiaSemana().name().equals(dia.name())
 				&& !hora.isBefore(d.getHoraInicio()) && !hora.isAfter(d.getHoraFinal()));
+
+		if (!disponible) {
+			throw new HorarioNoDisponibleException("El médico no atiende en ese horario");
+		}
 	}
+	
+	//===========================================================
+	//==================== HORARIOS DISPONIBLES ==========
+	//===========================================================
 
 	public List<String> ObtenerHorariosDisponibles(Long medicoId, LocalDate fecha, Long orgId) {
 
@@ -400,6 +425,7 @@ public class turnoService {
 
 		if (delDia.isEmpty())
 			return Collections.emptyList();
+		
 
 		// generar todos los horarios disponibles
 
@@ -418,12 +444,60 @@ public class turnoService {
 		List<Turno> turnos = turnoRepo.findByMedicoIdAndFechaAndOrganizacionId(medicoId, fecha, orgId);
 
 		// ⚠️ STREAM IMPORTANTE ACÁ
-		Set<LocalTime> ocupados = turnos.stream().map(Turno::getHora).collect(Collectors.toSet());
+	
+		//modificamos el returno del para el front end
+		
+
+		//filtramos los ocupados 
+		Set<LocalTime> ocupados = turnos.stream()
+			    .filter(t -> t.getEstado() != EstadoTurno.CANCELADO) // 🔥 CLAVE
+			    .map(Turno::getHora)
+			    .collect(Collectors.toSet());
 
 		// 6️⃣ armar respuesta FINAL (ACA ESTA LA MAGIA 🔥)
+		
 		return horarios.stream()
-				.map(hora -> new AgendaDtoResponse(hora.toString(), ocupados.contains(hora) ? "OCUPADO" : "LIBRE"))
-				.toList();
+				 .map(hora -> {
+
+		                Turno turno = turnos.stream()
+		                        .filter(t -> t.getHora().equals(hora))
+		                        .findFirst()
+		                        .orElse(null);
+
+		                if (turno != null && turno.getEstado() != EstadoTurno.CANCELADO) {
+		                    return new AgendaDtoResponse(
+		                            hora.toString(),
+		                            "OCUPADO",
+		                            turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido()
+		                    );
+		                } else {
+		                    return new AgendaDtoResponse(
+		                            hora.toString(),
+		                            "LIBRE",
+		                            null
+		                    );
+		                }
+		            })
+		            .toList();
+	
+	}
+
+	// =================================================================
+	// ===========VALIDACION CON TURNOS Y DISPONIBILIDAD MEDICA=========
+	// =================================================================
+
+	public void ValidarTurnoConDisponiblidad(Medico medico, LocalDate fecha, LocalTime hora, Long orgId) {
+
+		DayOfWeek dia = fecha.getDayOfWeek();
+
+		List<Disponibilidad> disponibilidades = dispoRepo.findByMedicoIdAndOrganizacionId(medico.getId(), orgId);
+
+		boolean disponible = disponibilidades.stream().anyMatch(d -> d.getDiaSemana().name().equals(dia.name())
+				&& !hora.isAfter(d.getHoraFinal()) && !hora.isBefore(d.getHoraInicio()));
+
+		if (!disponible) {
+			throw new HorarioNoDisponibleException("El médico no atiende en ese día y horario");
+		}
 	}
 
 }

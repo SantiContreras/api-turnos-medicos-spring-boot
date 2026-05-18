@@ -82,12 +82,14 @@ public class turnoController {
 	// =================== END POINT CANCELAR TURNO
 	// =================================
 	@PutMapping("/{id}/cancelar")
-	public Turno cancelar(@PathVariable Long id, HttpServletRequest request) {
+	public String cancelar(@PathVariable Long id, HttpServletRequest request) {
 
-		String token = request.getHeader("Authorization").substring(7);
-		Long orgId = jwtService.extractOrganizacion(token);
+	    String token = request.getHeader("Authorization").substring(7);
+	    Long orgId = jwtService.extractOrganizacion(token);
 
-		return turSer.cancelar(id, orgId);
+	    turSer.cancelar(id, orgId);
+
+	    return "Turno cancelado correctamente";
 	}
 
 	// =================== END POINT ATENDER TURNO
