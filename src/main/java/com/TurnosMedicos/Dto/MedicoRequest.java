@@ -1,22 +1,25 @@
 package com.TurnosMedicos.Dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-public class MedicoResponseDto {
-
-	private Long id;
+public class MedicoRequest {
+	
+	@NotBlank(message="el nombre no puede estar vacion")
 	private String nombre;
+	@NotBlank(message="el campo apellido no puede estar vacio")
 	private String apellido;
-	private String matricula;
+	
+	@NotBlank(message="Edl campo matricula no puede estar vacia")
+	private String matricula; 
+	
+	@NotNull(message="La especialidad es obligatoria")
 	private Long especialidadId;
+	
+	@NotNull(message="La organizacion es obligatoria")
 	private Long organizacionId;
-
-	public MedicoResponseDto() {
-	}
-
-	public Long getId() {
-		return id;
-	}
+	
+	public MedicoRequest() {}
 
 	public String getNombre() {
 		return nombre;
@@ -24,6 +27,10 @@ public class MedicoResponseDto {
 
 	public String getApellido() {
 		return apellido;
+	}
+
+	public String getMatricula() {
+		return matricula;
 	}
 
 	public Long getEspecialidadId() {
@@ -34,20 +41,12 @@ public class MedicoResponseDto {
 		return organizacionId;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
-	}
-
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
 	}
 
 	public void setApellido(String apellido) {
 		this.apellido = apellido;
-	}
-
-	public String getMatricula() {
-		return matricula;
 	}
 
 	public void setMatricula(String matricula) {
@@ -61,5 +60,7 @@ public class MedicoResponseDto {
 	public void setOrganizacionId(Long organizacionId) {
 		this.organizacionId = organizacionId;
 	}
+	
+	
 
 }

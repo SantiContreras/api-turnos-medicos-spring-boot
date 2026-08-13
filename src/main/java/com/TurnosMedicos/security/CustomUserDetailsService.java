@@ -1,6 +1,7 @@
 package com.TurnosMedicos.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -32,18 +33,16 @@ public class CustomUserDetailsService implements UserDetailsService {
 		            .orElseThrow(() ->
 		                    new UsernameNotFoundException("Usuario no encontrado"));
 
+		  String rol = usuario.getRol().trim().toUpperCase();
 		    // 👇 DEBUG TEMPORAL
-		    System.out.println("USERNAME BD: " + usuario.getUsername());
-		    System.out.println("PASSWORD BD: " + usuario.getPassword());
-		    System.out.println("ROL BD: " + usuario.getRol());
-		    System.out.println("MATCH 1234?: " +
-		            passwordEncoder.matches("1234", usuario.getPassword()));
+		  System.out.println("USERNAME BD: " + usuario.getUsername());
+		  System.out.println("ROL BD: " + usuario.getRol());
 		 
 
 		    return User.builder()
 		            .username(usuario.getUsername())
 		            .password(usuario.getPassword())
-		            .authorities("ROLE_" + usuario.getRol())  // ojo con esto, después lo vemos
+		            .authorities(new SimpleGrantedAuthority("ROLE_" + rol))
 		            .build();
 	}
 

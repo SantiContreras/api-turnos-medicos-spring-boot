@@ -157,12 +157,42 @@ public class turnoController {
 	// END POINT PARA ORTENER AGENDA DE TURNOS DISPONIBLES MAS COMPLETO
 
 	@GetMapping("/agenda")
-	public List<AgendaDtoResponse> obtenerAgenda(@RequestParam Long medicoId,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha, HttpServletRequest request) {
+	public List<AgendaDtoResponse> obtenerAgenda(
+	        @RequestParam Long medicoId,
+	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+	        @RequestParam Long organizacionId,
+	        HttpServletRequest request) {
 
-		String token = request.getHeader("Authorization").substring(7);
-		Long orgId = jwtService.extractOrganizacion(token);
+	    String header = request.getHeader("Authorization");
 
-		return turSer.obtenerAgendaVisual(medicoId, fecha, orgId);
+	    Long orgId;
+
+	    if (header == null) {
+	        orgId = 1L;
+	    } else {
+
+	        String token = header.substring(7);
+
+	        orgId = jwtService.extractOrganizacion(token);
+
+	        // Si el usuario es ADMIN_GLOBAL,
+	        // usamos la organización seleccionada desde Angular
+	        if (orgId == null) {
+	            orgId = organizacionId;
+	        }
+	    }
+
+	    System.out.println("=============================");
+	    System.out.println("MEDICO ID: " + medicoId);
+	    System.out.println("FECHA: " + fecha);
+	    System.out.println("ORGANIZACION SELECCIONADA: " + organizacionId);
+	    System.out.println("ORGANIZACION EFECTIVA: " + orgId);
+	    System.out.println("=============================");
+
+	    return turSer.obtenerAgendaVisual(
+	            medicoId,
+	            fecha,
+	            orgId
+	    );
 	}
 }

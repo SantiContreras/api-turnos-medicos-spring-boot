@@ -403,7 +403,7 @@ public class turnoService {
 
 		// validamos el medico
 
-		Medico medico = medicoRepo.findById(orgId)
+		Medico medico = medicoRepo.findById(medicoId)
 				.orElseThrow(() -> new RuntimeException("El medico no pertenece a la organizacion"));
 
 		if (!medico.getOrganizacion().getId().equals(orgId)) {
@@ -466,12 +466,14 @@ public class turnoService {
 
 		                if (turno != null && turno.getEstado() != EstadoTurno.CANCELADO) {
 		                    return new AgendaDtoResponse(
+		                    		turno.getId(),
 		                            hora.toString(),
 		                            "OCUPADO",
 		                            turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido()
 		                    );
 		                } else {
 		                    return new AgendaDtoResponse(
+		                    		null, // mp hay turnos para cancelar
 		                            hora.toString(),
 		                            "LIBRE",
 		                            null

@@ -6,12 +6,17 @@ public class AuthResponse {
 	private String token;
 	private String role;
 	private String type = "Bearer";
+	private String mensaje;
 
 	public AuthResponse(String token, String username, String role) {
 		this.token = token;
 		this.username = username;
 		this.role = role;
 
+	}
+
+	public AuthResponse(String mensaje) {
+		this.mensaje = mensaje;
 	}
 
 	public String getUsername() {
@@ -28,6 +33,14 @@ public class AuthResponse {
 
 	public String getType() {
 		return type;
+	}
+
+	public String getMensaje() {
+		return mensaje;
+	}
+
+	public void setMensaje(String mensaje) {
+		this.mensaje = mensaje;
 	}
 
 }

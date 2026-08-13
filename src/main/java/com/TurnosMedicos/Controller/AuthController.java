@@ -1,7 +1,8 @@
 package com.TurnosMedicos.Controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +23,6 @@ public class AuthController {
 	private final JwtService jwtService;
 	private final UsuarioRepository usuarioRepository;
 	private final PasswordEncoder passwordEncoder;
-	
 
 	public AuthController(AuthenticationManager authenticatinManager, JwtService jwtService,
 			UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
@@ -34,39 +34,50 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public AuthResponse login(@RequestBody AuthRequest request) {
+	public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
 
-		System.out.println("USER REQUEST: " + request.getUsername());
-		System.out.println("PASS REQUEST: " + request.getPassword());
+		try {
+			System.out.println("USER REQUEST: " + request.getUsername());
+			System.out.println("PASS REQUEST: " + request.getPassword());
 
-		Authentication auth = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+			Authentication auth = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-		Usuario usuario = usuarioRepository
-		        .findByUsername(request.getUsername())
-		        .orElseThrow();
-		
-		UserDetails userDetails = (UserDetails) auth.getPrincipal();
+			Usuario usuario = usuarioRepository.findByUsername(request.getUsername()).orElseThrow();
 
-		String token = jwtService.generatedToken(userDetails, usuario.getOrganizacion().getId());
+			UserDetails userDetails = (UserDetails) auth.getPrincipal();
+			Long organizacionId = null;
 
-		String role = userDetails.getAuthorities().iterator().next().getAuthority();
+			if (usuario.getOrganizacion() != null) {
+				organizacionId = usuario.getOrganizacion().getId();
+			}
 
-		return new AuthResponse(token, userDetails.getUsername(), role);
+			String token = jwtService.generatedToken(userDetails, organizacionId);
+			String role = userDetails.getAuthorities().iterator().next().getAuthority();
+
+			return ResponseEntity.ok(new AuthResponse(token, userDetails.getUsername(), role));
+		} catch (BadCredentialsException e) {
+
+			return ResponseEntity.status(401).body(new AuthResponse("usuario o contraseña incorrecta"));
+		}
+
+		catch (Exception e) {
+			return ResponseEntity.status(500).body(new AuthResponse("Error dinterno del servidor"));
+		}
 	}
 
 	@PostMapping("/register")
 	public String register(@RequestBody RegisterRequest request) {
-		
+
 		Usuario usuario = new Usuario();
 		usuario.setUsername(request.getUsername());
 		usuario.setPassword(request.getPassword());
 		usuario.setRol(request.getRole());
-		
+
 		usuarioRepository.save(usuario);
-		
+
 		return "El usuario se registro correctamente";
-		
+
 	}
 
 }

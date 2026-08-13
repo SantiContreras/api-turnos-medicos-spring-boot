@@ -30,18 +30,39 @@ public class SecurityConfig {
 
 	@SuppressWarnings("removal")
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
+	public SecurityFilterChain filterChain(
+	        HttpSecurity http,
+	        JwtAuthenticationFilter jwtAuthFilter) throws Exception {
 
-		http.csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**").permitAll()
-						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-						.requestMatchers("/admin/**").hasRole("ADMIN_GLOBAL")
-						.requestMatchers(HttpMethod.GET, "/api/turnosMedicos/**").hasAnyRole("USER", "ADMIN")
-						.requestMatchers("/api/turnosMedicos/**").hasRole("ADMIN").anyRequest().authenticated())
-				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).httpBasic(withDefaults());
-		return http.build();
+	    http
+	        .cors()
+	        .and()
+	        .csrf(csrf -> csrf.disable())
+	        .authorizeHttpRequests(auth -> auth
+
+	            .requestMatchers("/auth/**").permitAll()
+
+	            .requestMatchers(
+	                "/swagger-ui/**",
+	                "/v3/api-docs/**"
+	            ).permitAll()
+
+	            .requestMatchers("/admin/**")
+	                .hasRole("ADMIN_GLOBAL")
+
+	            .requestMatchers("/api/turnosMedicos/**")
+	                .authenticated()
+
+	            .anyRequest()
+	                .authenticated()
+	        )
+	        .addFilterBefore(
+	            jwtAuthFilter,
+	            UsernamePasswordAuthenticationFilter.class
+	        );
+
+	    return http.build();
 	}
-
 	
 
 	@Bean

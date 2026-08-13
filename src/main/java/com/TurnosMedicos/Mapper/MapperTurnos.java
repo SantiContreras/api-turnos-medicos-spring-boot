@@ -25,7 +25,7 @@ public class MapperTurnos {
 			medicoDto.setId(t.getMedico().getId());
 
 			if (t.getMedico().getEspecialidad() != null) {
-				medicoDto.setEspecialidad(t.getMedico().getEspecialidad().getNombre());
+				medicoDto.setEspecialidadId(t.getMedico().getEspecialidad().getId());
 			}
 
 			turnoDto.setMedico(medicoDto);

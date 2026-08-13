@@ -46,6 +46,9 @@ public class Medico implements Serializable{
 	@ManyToOne
 	@JoinColumn(name="organizacion_id",nullable = false)
 	private Organizacion organizacion;
+	
+	@Column(nullable = false)
+	private boolean activo = true;
 
 	 public Organizacion getOrganizacion() {
 		return organizacion;
@@ -97,6 +100,16 @@ public class Medico implements Serializable{
 	public void setEspecialidad(especialidad especialidad) {
 		this.especialidad = especialidad;
 	}
+
+	public boolean isActivo() {
+		return activo;
+	}
+
+	public void setActivo(boolean activo) {
+		this.activo = activo;
+	}
+	
+	
 	 
 	 
 }

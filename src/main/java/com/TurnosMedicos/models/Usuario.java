@@ -22,7 +22,7 @@ public class Usuario {
 	private String rol; // medico , paciente , admin
 
 	@ManyToOne
-	@JoinColumn(name = "organizacion_id", nullable = false)
+	@JoinColumn(name = "organizacion_id")
 	private Organizacion organizacion;
 	
 	private boolean activo = true;

@@ -27,41 +27,60 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	@Autowired
 	private UserDetailsService userDetailsService;
 
-	
-	// Esta clase seria como el sereno .Intercepta cada Request ,Busca el header , Extrae el token lo valida 
+	// Esta clase seria como el sereno .Intercepta cada Request ,Busca el header ,
+	// Extrae el token lo valida
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
-		final String authHeader = request.getHeader("Authorization");
-		final String jwt;
-		final String username;
+		try {
 
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
-		}
+			final String authHeader = request.getHeader("Authorization");
+			final String jwt;
+			final String username;
 
-		jwt = authHeader.substring(7);
-		username = jwtService.extractUsername(jwt);
-
-		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-			if (jwtService.isTokenValid(jwt, userDetails)) {
-
-				UsernamePasswordAuthenticationToken authToken =
-
-						new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-				// esta linea le dice a Spring este usuario esta autenticado, puede pasar , sino la request queda anonima y la bloquea.
-				SecurityContextHolder.getContext().setAuthentication(authToken);
+			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+				filterChain.doFilter(request, response);
+				return;
 			}
-		}
 
-		filterChain.doFilter(request, response);
+			jwt = authHeader.substring(7);
+
+			username = jwtService.extractUsername(jwt);
+
+			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+				UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+
+				if (jwtService.isTokenValid(jwt, userDetails)) {
+
+					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+							null, userDetails.getAuthorities());
+
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				}
+			}
+
+			filterChain.doFilter(request, response);
+
+		} catch (io.jsonwebtoken.ExpiredJwtException e) {
+
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.setContentType("application/json");
+			response.getWriter().write("{\"mensaje\": \"Token expirado\"}");
+
+		} catch (Exception e) {
+
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.getWriter().write("{\"mensaje\": \"Error en autenticación\"}");
+		}
+	}
+	
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+
+	    String path = request.getServletPath();
+
+	    return path.startsWith("/auth/");
 	}
 }
