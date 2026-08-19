@@ -29,6 +29,8 @@ public class especialidad implements Serializable{
 	
 	private String descripcion;
 	
+	private boolean activo=false;
+	
     public especialidad() {
     	
     }
@@ -56,6 +58,16 @@ public class especialidad implements Serializable{
 	public void setDescripcion(String descripcion) {
 		this.descripcion = descripcion;
 	}
+
+	public boolean isActivo() {
+		return activo;
+	}
+
+	public void setActivo(boolean activo) {
+		this.activo = activo;
+	}
+	
+	
     
     //setter and getter
     
